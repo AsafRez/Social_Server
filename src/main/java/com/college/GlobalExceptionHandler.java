@@ -14,3 +14,5 @@ public class GlobalExceptionHandler {
         return "/home";
     }
 }
+
+

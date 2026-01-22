@@ -1,16 +1,18 @@
 package com.college.utils;
 
+import com.college.Classes.*;
+import com.college.responses.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
+import static com.college.utils.Errors.*;
 
 @Component
 public class DbUtils {
     private Connection connection;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @PostConstruct
     public void init() {
@@ -18,7 +20,7 @@ public class DbUtils {
             String host = "localhost";
             String username = "root";
             String password = "1234";
-            String schema = "project_2025";
+            String schema = "socialnetwork";
             int port = 3306;
             String url = "jdbc:mysql://"
                     + host + ":" + port + "/"
@@ -32,6 +34,208 @@ public class DbUtils {
         }
     }
 
+    //register query
+    public BasicResponse registerUser(String username, String password) {
+        try {
+            String defaultPicPath = "/images/DefaultPic.png";
+            PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(username, password,Profile_image) values(?,?,?)");
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.setString(3, defaultPicPath);
+            int rs = ps.executeUpdate();
+            if (rs == 0) {
+                return new BasicResponse(false, ERROR_USERNAME_TAKEN);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(true, null);
+
+    }
 
 
+    //login query
+    public BasicResponse login(String username, String password) {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement("SELECT username, password FROM users WHERE username=? AND password=?");
+            ps.setString(1, username);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int userId = rs.getInt("id");
+
+                    String token = jwtUtils.generateToken(username, userId);
+                    return new TokenResponse(true, null,token);
+                }
+                return new BasicResponse(false, ERROR_WRONG_INFO);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(false, ERROR_WRONG_INFO);
+    }
+
+
+    public User exportUserDetails(String username) {
+        User user = null;
+        user.setUserName(username);
+        try{
+            PreparedStatement ps = this.connection.prepareStatement(
+                   "SELECT u.Id,u.Username,u.Profile_image,p.Content FROM users AS u"+
+                    "LEFT JOIN posts AS p ON u.Id = p.Author " +
+                    " LEFT JOIN follows f on f.Following=u.Id+"+
+                    " LEFT JOIN likes l on l.User_id=u.Id "+
+                    " WHERE u.Username=?"
+            );
+
+                    ps.setString(1,username);
+                    ResultSet rs = ps.executeQuery();
+                    user.setId(rs.getInt("id"));
+                    if (user !=null){
+
+                    }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+/*
+    public List<User> searchUser(String username) {
+        List <User> users = new ArrayList<>();
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(
+                    "SELECT id,username FROM users AS u " +
+                            "JOIN posts as p AT p.userid = u.userid " +
+                            "JOIN "
+                            "WHERE username LIKE ?" +
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    result.add(rs.getInt("id"));
+                }
+                    return result;
+                }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(false, ERROR_WRONG_INFO);
+    }
+*/
+    private boolean checkIfFollow(int followerId, int followingId){
+        try {
+            PreparedStatement ps = this.connection.prepareStatement("SELECT Follower FROM follows WHERE Follower=? AND Following=?");
+            ps.setInt(1, followerId);
+            ps.setInt(2, followingId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public BasicResponse followUser(int followerId, int followingId) {
+        if (followerId != followingId) {
+        try {
+                PreparedStatement ps;
+                int rs;
+                if (checkIfFollow(followerId, followingId)) {
+
+                    ps = this.connection.prepareStatement("DELETE FROM follows WHERE Follower=? AND Following=?");
+                    ps.setInt(1, followerId);
+                    ps.setInt(2, followingId);
+                    rs = ps.executeUpdate();
+                    if (rs == 1) {
+                        return new BasicResponse(true, null);
+                    }
+                } else {
+                    ps = this.connection.prepareStatement("INSERT INTO follows (Follower,Following) VALUES (?,?)");
+                    ps.setInt(1, followerId);
+                    ps.setInt(2, followingId);
+                    rs = ps.executeUpdate();
+                    if (rs == 1) {
+                        return new BasicResponse(true, null);
+                    }
+                }
+            } catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+        return new BasicResponse(false, ERROR_WRONG_INFO);
+
+    }
+
+    //Toggle like function
+    public BasicResponse toggleLike(int userId, int postId) {
+        String checkSQL = "SELECT 1 FROM likes WHERE Post_id=? AND User_id=?"; //check if liked query
+        String insertSQL = "INSERT INTO likes (Post_id, User_id) VALUES (?, ?)"; //insert like query
+        String deleteSQL = "DELETE FROM likes WHERE Post_id=? AND User_id=?"; //remove like query
+        try (PreparedStatement checkPS = this.connection.prepareStatement(checkSQL)){
+            checkPS.setInt(1, postId);
+            checkPS.setInt(2, userId);
+
+            boolean alreadyLiked; // holds liked or not
+            try(ResultSet rs = checkPS.executeQuery()){//runs check if liked query to set alreadyLiked
+                alreadyLiked = rs.next(); //returns true IF line exists
+            }
+
+            //if liked -> deletes the like using the remove query
+            if (alreadyLiked){
+                try (PreparedStatement deletePS = this.connection.prepareStatement(deleteSQL)){
+                    deletePS.setInt(1, postId);
+                    deletePS.setInt(2, userId);
+
+                    int affected = deletePS.executeUpdate();
+                    if (affected == 1){
+                        return new BasicResponse(true, null);//removed
+                    }
+                    return new BasicResponse(false, ERROR_DB_NOT_UPDATED);
+                }
+                // else (not liked) -> adds a like using the insert query
+            }else {
+                try (PreparedStatement insertPS = this.connection.prepareStatement(insertSQL)){
+                    insertPS.setInt(1, postId);
+                    insertPS.setInt(2, userId);
+
+                    int affected = insertPS.executeUpdate();
+                    if (affected == 1){
+                        return new BasicResponse(true, null); //added
+                    }
+                    return new BasicResponse(false, ERROR_DB_NOT_UPDATED);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(false, ERROR_DATABASE);
+    }
+
+
+    public BasicResponse publishedPost(int userid, String postContent) {
+        try {
+            if(!postContent.isEmpty()) {
+                if (postContent.length() <= 500) {
+                    PreparedStatement ps = this.connection.prepareStatement(
+                            "INSERT INTO posts " +
+                                    "(Content,Author,Posted_Date) VALUES (?,?,?)");
+                    ps.setString(1, postContent);
+                    ps.setInt(2, userid);
+                    ps.setDate(3,
+                            new java.sql.Date(System.currentTimeMillis()));
+                    int results = ps.executeUpdate();
+                    if (results == 1) {
+                        return new BasicResponse(true, null);
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(false, ERROR_WRONG_INFO);
+    }
 }
+
