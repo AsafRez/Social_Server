@@ -3,7 +3,7 @@ import java.util.List;
 
 
 public class User {
-    private int id;
+//    private int id;
     private String userName;
     private String password;
     private String profile_picture;
@@ -12,8 +12,8 @@ public class User {
     private List<User> followers; //User followers list
     private List<User> following; //User following list
 
-    public User(int id, String userName, String password, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-        this.id = id;
+    public User(String userName, String password, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
+//        this.id = id;
         this.userName = userName;
         this.password = password;
         this.profile_picture = profile_picture;
@@ -21,8 +21,8 @@ public class User {
         this.followers = followers;
         this.following = following;
     }
-    public User(int id, String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-        this.id = id;
+    public User( String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
+//        this.id = id;
         this.userName = userName;
         this.profile_picture = profile_picture;
         this.posts = posts;
@@ -30,12 +30,9 @@ public class User {
         this.following = following;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+    public User(String profile_picture, String userName) {
+        this.profile_picture = profile_picture;
+        this.userName = userName;
     }
 
     public String getUserName() {

@@ -66,7 +66,9 @@ public class DbUtils {
                     int userId = rs.getInt("id");
 
                     String token = jwtUtils.generateToken(username, userId);
-                    return new TokenResponse(true, null,token);
+                    return new UserResponse(true, null,new User(
+                            rs.getString("Username"),rs.getString("Profile_image")
+                    ),token);
                 }
                 return new BasicResponse(false, ERROR_WRONG_INFO);
             }
@@ -91,7 +93,7 @@ public class DbUtils {
 
                     ps.setString(1,username);
                     ResultSet rs = ps.executeQuery();
-                    user.setId(rs.getInt("id"));
+//                    user.setId(rs.getInt("id"));
                     if (user !=null){
 
                     }
@@ -143,24 +145,19 @@ public class DbUtils {
                 PreparedStatement ps;
                 int rs;
                 if (checkIfFollow(followerId, followingId)) {
-
                     ps = this.connection.prepareStatement("DELETE FROM follows WHERE Follower=? AND Following=?");
-                    ps.setInt(1, followerId);
-                    ps.setInt(2, followingId);
-                    rs = ps.executeUpdate();
-                    if (rs == 1) {
-                        return new BasicResponse(true, null);
-                    }
                 } else {
                     ps = this.connection.prepareStatement("INSERT INTO follows (Follower,Following) VALUES (?,?)");
-                    ps.setInt(1, followerId);
-                    ps.setInt(2, followingId);
-                    rs = ps.executeUpdate();
-                    if (rs == 1) {
-                        return new BasicResponse(true, null);
-                    }
                 }
-            } catch(SQLException e){
+            ps.setInt(1, followerId);
+            ps.setInt(2, followingId);
+            rs = ps.executeUpdate();
+            if (rs == 1) {
+                return new BasicResponse(true, null);
+            }
+            return new BasicResponse(false, ERROR_DB_NOT_UPDATED);
+
+        } catch(SQLException e){
                 e.printStackTrace();
             }
         }
@@ -168,7 +165,38 @@ public class DbUtils {
 
     }
 
-    //Toggle like function
+    private boolean checkLikeStatus(int userId, int postId) {
+        try{
+        PreparedStatement ps=this.connection.prepareStatement("SELECT 1 FROM likes WHERE Post_id=? AND User_id=?");
+        ps.setInt(1, postId);
+        ps.setInt(2, userId);
+        return ps.executeQuery().next();
+    }catch (SQLException e){
+        e.printStackTrace();}
+        return false;
+    }
+    public BasicResponse likeToggle(int userId, int postId) {
+        boolean likeStatus = checkLikeStatus(userId, postId);
+
+            PreparedStatement ps;
+            try {
+                if (likeStatus) {
+                ps = this.connection.prepareStatement("DELETE FROM likes WHERE Post_id=? AND User_id=?");
+            }else{
+                    ps = this.connection.prepareStatement("INSERT INTO likes VALUES (?,?)");
+                }
+                ps.setInt(1, postId);
+                ps.setInt(2, userId);
+                if(ps.executeUpdate()==1){
+                    return new BasicResponse(true, null);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return new BasicResponse(false, ERROR_WRONG_INFO);
+    }
+
+        //Toggle like function
     public BasicResponse toggleLike(int userId, int postId) {
         String checkSQL = "SELECT 1 FROM likes WHERE Post_id=? AND User_id=?"; //check if liked query
         String insertSQL = "INSERT INTO likes (Post_id, User_id) VALUES (?, ?)"; //insert like query

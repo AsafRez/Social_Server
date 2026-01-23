@@ -1,7 +1,7 @@
 package com.college.responses;
 
 public class TokenResponse extends BasicResponse {
-    private String token;
+    private String  token;
 
     public TokenResponse(boolean success, Integer errorCode, String token) {
         super(success, errorCode);
