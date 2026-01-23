@@ -9,14 +9,14 @@ public class Post {
     private int AuthorId;
     private String content;
     private Date PostDate;
-    private List <Like> likes;
+//    private List <Like> likes;
 
-    public Post(int id, int authorId, String content, Date postDate, List<Like> likes) {
+    public Post(int id, int authorId, String content, Date postDate) {
         Id = id;
         AuthorId = authorId;
         this.content = content;
         PostDate = postDate;
-        this.likes = likes;
+//        this.likes = likes;
     }
 
     public int getId() {
@@ -51,11 +51,11 @@ public class Post {
         PostDate = postDate;
     }
 
-    public List<Like> getLikes() {
-        return likes;
-    }
-
-    public void setLikes(List<Like> likes) {
-        this.likes = likes;
-    }
+//    public List<Like> getLikes() {
+//        return likes;
+//    }
+//
+//    public void setLikes(List<Like> likes) {
+//        this.likes = likes;
+//    }
 }

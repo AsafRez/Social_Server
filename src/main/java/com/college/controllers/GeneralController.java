@@ -2,6 +2,7 @@ package com.college.controllers;
 
 
 import com.college.responses.BasicResponse;
+import com.college.responses.PostResponse;
 import com.college.utils.DbUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,18 @@ public class GeneralController {
     public BasicResponse register(String username, String password) {
         String hashedPassword = generateMD5(username, password);
         return dbUtils.registerUser(username, hashedPassword);
-
+    }
+    @RequestMapping("/Count-Likes")
+    public int countLikes(int postId) {
+        return dbUtils.countLikes(postId);
+    }
+    @RequestMapping("/Count-Followers")
+    public int countFollowrs(int userId) {
+        return dbUtils.countFollowers(userId);
+    }
+    @RequestMapping("/Get-Following-Posts")
+    public PostResponse getPost(int userId) {
+        return dbUtils.getPosts(userId);
     }
 
     @RequestMapping(value = "/login")

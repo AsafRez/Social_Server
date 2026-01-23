@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.college.utils.Errors.*;
 
 @Component
@@ -58,7 +61,7 @@ public class DbUtils {
     //login query
     public BasicResponse login(String username, String password) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT username, password FROM users WHERE username=? AND password=?");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT Id,username, password FROM users WHERE username=? AND password=?");
             ps.setString(1, username);
             ps.setString(2, password);
             try (ResultSet rs = ps.executeQuery()) {
@@ -66,7 +69,7 @@ public class DbUtils {
                     int userId = rs.getInt("id");
 
                     String token = jwtUtils.generateToken(username, userId);
-                    return new UserResponse(true, null,new User(
+                    return new UserResponse(true, null,new User(rs.getInt("Id"),
                             rs.getString("Username"),rs.getString("Profile_image")
                     ),token);
                 }
@@ -164,7 +167,34 @@ public class DbUtils {
         return new BasicResponse(false, ERROR_WRONG_INFO);
 
     }
-
+    public int countLikes(int postId){
+        try{
+            PreparedStatement ps = this.connection.prepareStatement("Select Count(User_id) FROM likes WHERE Post_Id=?");
+            ps.setInt(1, postId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        catch (SQLException e){
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    public int countFollowers(int userId){
+        try{
+            PreparedStatement ps = this.connection.prepareStatement("Select Count(Follower) FROM follows WHERE Following=?");
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        catch (SQLException e){
+            e.printStackTrace();
+        }
+        return 0;
+    }
     private boolean checkLikeStatus(int userId, int postId) {
         try{
         PreparedStatement ps=this.connection.prepareStatement("SELECT 1 FROM likes WHERE Post_id=? AND User_id=?");
@@ -251,8 +281,8 @@ public class DbUtils {
                                     "(Content,Author,Posted_Date) VALUES (?,?,?)");
                     ps.setString(1, postContent);
                     ps.setInt(2, userid);
-                    ps.setDate(3,
-                            new java.sql.Date(System.currentTimeMillis()));
+                    ps.setTimestamp(3,
+                            new java.sql.Timestamp(System.currentTimeMillis()));
                     int results = ps.executeUpdate();
                     if (results == 1) {
                         return new BasicResponse(true, null);
@@ -264,6 +294,30 @@ public class DbUtils {
             e.printStackTrace();
         }
         return new BasicResponse(false, ERROR_WRONG_INFO);
+    }
+    public PostResponse getPosts(int userId) {
+        PreparedStatement ps;
+        List<Post> posts = new ArrayList<Post>();
+        try {
+            ps=this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
+                    "WHERE F.follower=?");
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+            while (rs.next()) {
+                posts.add(new Post(
+                        rs.getInt("Id"),
+                        rs.getInt("Author"),
+                        rs.getString("Content"),
+                        rs.getDate("Posted_date")));
+            }
+            return new PostResponse(true, null, posts);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return new PostResponse(false, ERROR_WRONG_INFO,null);
+
     }
 }
 

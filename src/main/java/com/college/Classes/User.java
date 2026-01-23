@@ -3,7 +3,7 @@ import java.util.List;
 
 
 public class User {
-//    private int id;
+    private int id;
     private String userName;
     private String password;
     private String profile_picture;
@@ -30,7 +30,8 @@ public class User {
         this.following = following;
     }
 
-    public User(String profile_picture, String userName) {
+    public User(int id,String profile_picture, String userName) {
+        this.id=id;
         this.profile_picture = profile_picture;
         this.userName = userName;
     }
