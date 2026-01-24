@@ -53,8 +53,8 @@ public class GeneralController {
         return dbUtils.countFollowers(userId);
     }
     @RequestMapping("/Get-Following-Posts")
-    public PostResponse getPost(int userId) {
-        return dbUtils.getPosts(userId);
+    public PostResponse getPost(int userId,int number ){
+        return dbUtils.getPosts(userId,number);
     }
 
     @RequestMapping(value = "/login")
