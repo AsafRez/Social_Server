@@ -306,10 +306,17 @@ public class DbUtils {
         PreparedStatement ps;
         List<Post> posts = new ArrayList<Post>();
         try {
-            ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
-                    "WHERE F.follower=? ORDER BY P.Posted_Date DESC LIMIT ? ");
+            if(count !=0) {
+                ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
+                        "WHERE F.follower=? ORDER BY P.Posted_Date DESC LIMIT ? ");
+                ps.setInt(2, count);
+            }else{
+                ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
+                        "WHERE F.follower=?");
+
+            }
             ps.setInt(1, userId);
-            ps.setInt(2, count);
+
             ResultSet rs = ps.executeQuery();
             if (rs != null) {
                 while (rs.next()) {
