@@ -5,12 +5,15 @@ import com.college.responses.BasicResponse;
 import com.college.responses.PostResponse;
 import com.college.utils.DbUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 
 
 @RestController
@@ -73,6 +76,33 @@ public class GeneralController {
     @RequestMapping(value = "/Follow-User")
     public BasicResponse follow(int followerid,  int followingid ) {
         return dbUtils.followUser(followerid, followingid);
+    }
+    private int sendSMS(String tel, int OTPSend) {
+        // 1. הגדרת ה-URL המלא (כבר כולל את הפרמטרים בתוכו)
+        String serverURL = "https://backend-qcf9.onrender.com/send-sms?token=Almog464@&phoneNumber="
+                + tel + "&message=Hello your one time password is:" + OTPSend
+                + " please do not share it with others PLZZZZZZ";
+        // 2. יצירת אובייקט RestTemplate
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(serverURL, null, String.class);
+
+            // בדיקה אם הסטטוס קוד הוא 200 (OK)
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("SMS נשלח בהצלחה: " + response.getBody());
+                return 1; // החזרת הצלחה
+            } else {
+                return 0; // נכשל
+            }
+        } catch (Exception e) {
+            System.err.println("שגיאה בשליחת SMS: " + e.getMessage());
+            return -1; // שגיאת רשת
+        }
+    }
+    private int generateOTP(){
+        Random random = new Random();
+        int otp = random.nextInt(10000,99999);
+        return otp;
     }
 
 

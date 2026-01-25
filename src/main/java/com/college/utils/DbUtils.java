@@ -38,22 +38,38 @@ public class DbUtils {
         }
     }
 
-    //register query
-    public BasicResponse registerUser(String username, String password) {
+    private boolean checkUser(String username) {
         try {
-            String defaultPicPath = "/images/DefaultPic.png";
-            PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(username, password,Profile_image) values(?,?,?)");
-            ps.setString(1, username);
-            ps.setString(2, password);
-            ps.setString(3, defaultPicPath);
-            int rs = ps.executeUpdate();
-            if (rs == 0) {
-                return new BasicResponse(false, ERROR_USERNAME_TAKEN);
+            PreparedStatement ps = this.connection.prepareStatement("SELECT id from users");
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return false;
+    }
+
+    //register query
+    public BasicResponse registerUser(String username, String password) {
+        try {
+            if (!checkUser(username)) {
+                String defaultPicPath = "/images/DefaultPic.png";
+                PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(username, password,Profile_image) values(?,?,?)");
+                ps.setString(1, username);
+                ps.setString(2, password);
+                ps.setString(3, defaultPicPath);
+                int rs = ps.executeUpdate();
+                if (rs == 0) {
+                    return new BasicResponse(false, ERROR_USERNAME_TAKEN);
+                }
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return new BasicResponse(true, null);
 
     }
@@ -306,11 +322,11 @@ public class DbUtils {
         PreparedStatement ps;
         List<Post> posts = new ArrayList<Post>();
         try {
-            if(count !=0) {
+            if (count != 0) {
                 ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
                         "WHERE F.follower=? ORDER BY P.Posted_Date DESC LIMIT ? ");
                 ps.setInt(2, count);
-            }else{
+            } else {
                 ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
                         "WHERE F.follower=?");
 
