@@ -1,6 +1,6 @@
-package com.college.responses;
+package com.social.responses;
 
-import com.college.Classes.Post;
+import com.social.Classes.Post;
 
 import java.util.List;
 

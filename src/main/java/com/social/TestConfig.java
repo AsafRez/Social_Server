@@ -1,4 +1,4 @@
-package com.college;
+package com.social;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;

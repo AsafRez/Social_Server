@@ -1,4 +1,4 @@
-package com.college.utils;
+package com.social.utils;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -1,6 +1,6 @@
-package com.college.responses;
+package com.social.responses;
 
-import com.college.Classes.User;
+import com.social.Classes.User;
 
 public class UserResponse extends BasicResponse{
     private User user;
@@ -10,5 +10,10 @@ public class UserResponse extends BasicResponse{
         super(success, errorCode);
         this.user = user;
         this.token = token;
+    }
+
+    public UserResponse(boolean success, Integer errorCode, User user) {
+        super(success, errorCode);
+        this.user = user;
     }
 }

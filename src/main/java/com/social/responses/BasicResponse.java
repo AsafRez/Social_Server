@@ -1,20 +1,20 @@
-package com.college.responses;
+package com.social.responses;
 
 public class BasicResponse {
-    private boolean status;
+    private boolean success;
     private Integer errorCode;
 
     public BasicResponse(boolean success, Integer errorCode) {
-        this.status = success;
+        this.success = success;
         this.errorCode = errorCode;
     }
 
-    public boolean isStatus() {
-        return status;
+    public boolean isSuccess() {
+        return success;
     }
 
     public void setStatus(boolean status) {
-        this.status = status;
+        this.success = status;
     }
 
     public Integer getErrorCode() {

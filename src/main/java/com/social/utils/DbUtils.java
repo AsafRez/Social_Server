@@ -1,7 +1,7 @@
-package com.college.utils;
+package com.social.utils;
 
-import com.college.Classes.*;
-import com.college.responses.*;
+import com.social.Classes.*;
+import com.social.responses.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.college.utils.Errors.*;
+import static com.social.utils.Errors.*;
 
 @Component
 public class DbUtils {
@@ -49,6 +49,26 @@ public class DbUtils {
             e.printStackTrace();
         }
         return false;
+    }
+
+    //Verify Token
+    public BasicResponse verifyToken(String token) {
+        if (token == null) return new BasicResponse(false, GENERIC_ERROR);
+
+        try (PreparedStatement ps = this.connection.prepareStatement(
+                "SELECT Id, Username FROM users WHERE token = ?")) {
+
+            ps.setString(1, token);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                User user = new User(rs.getInt("Id"), rs.getString("Username"));
+                return new UserResponse(true, null, user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(false, GENERIC_ERROR);
     }
 
     //register query
@@ -124,28 +144,27 @@ public class DbUtils {
         return user;
     }
 
-    /*
-        public List<User> searchUser(String username) {
-            List <User> users = new ArrayList<>();
-            try {
-                PreparedStatement ps = this.connection.prepareStatement(
-                        "SELECT id,username FROM users AS u " +
-                                "JOIN posts as p AT p.userid = u.userid " +
-                                "JOIN "
-                                "WHERE username LIKE ?" +
-                ps.setString(1, username);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        result.add(rs.getInt("id"));
-                    }
-                        return result;
-                    }
-            } catch (SQLException e) {
-                e.printStackTrace();
+
+    public List<User> searchUser(String username) {
+        List <User> users = new ArrayList<>();
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(
+                    "SELECT Id,Username,Profile_image FROM users where username LIKE ?");
+            ps.setString(1, "%"+username+"%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User(rs.getInt("Id"),
+                            rs.getString("Username"),
+                            rs.getString("Profile_image"));
+                    users.add(user);
+                }
             }
-            return new BasicResponse(false, ERROR_WRONG_INFO);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    */
+        return users;
+    }
+
     private boolean checkIfFollow(int followerId, int followingId) {
         try {
             PreparedStatement ps = this.connection.prepareStatement("SELECT Follower FROM follows WHERE Follower=? AND Following=?");

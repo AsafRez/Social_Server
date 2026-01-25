@@ -1,6 +1,5 @@
-package com.college.Classes;
+package com.social.Classes;
 import java.sql.Date;
-import java.util.List;
 
 
 public class Post {

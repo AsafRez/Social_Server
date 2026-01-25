@@ -1,4 +1,4 @@
-package com.college.Classes;
+package com.social.Classes;
 
 public class Like {
 

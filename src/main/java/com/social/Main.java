@@ -1,4 +1,5 @@
-package com.college;
+package com.social;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;

@@ -1,10 +1,9 @@
-package com.college.utils;
+package com.social.utils;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Random;
 
 public class GeneralUtils {
 

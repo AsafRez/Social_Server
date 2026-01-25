@@ -1,4 +1,5 @@
-package com.college.Classes;
+package com.social.Classes;
+
 import java.util.List;
 
 
@@ -21,7 +22,7 @@ public class User {
         this.followers = followers;
         this.following = following;
     }
-    public User( String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
+    public User(String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
 //        this.id = id;
         this.userName = userName;
         this.profile_picture = profile_picture;
@@ -30,9 +31,13 @@ public class User {
         this.following = following;
     }
 
-    public User(int id,String profile_picture, String userName) {
+    public User(int id,String userName,String profile_picture) {
         this.id=id;
         this.profile_picture = profile_picture;
+        this.userName = userName;
+    }
+    public User(int id, String userName) {
+        this.id=id;
         this.userName = userName;
     }
 
@@ -83,4 +88,6 @@ public class User {
     public void setFollowing(List<User> following) {
         this.following = following;
     }
+
+    public void setId(int id) {this.id = id;}
 }

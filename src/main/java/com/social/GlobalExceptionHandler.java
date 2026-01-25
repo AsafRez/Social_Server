@@ -1,4 +1,4 @@
-package com.college;
+package com.social;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
