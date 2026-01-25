@@ -1,5 +1,6 @@
 package com.social.utils;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -18,6 +19,14 @@ public class JwtUtils {
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretString.getBytes());
+    }
+
+    public int extractUserId(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("User_id", Integer.class);
     }
 
     public String generateToken(String username, int userId) {

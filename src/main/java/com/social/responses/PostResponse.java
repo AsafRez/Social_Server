@@ -1,6 +1,6 @@
 package com.social.responses;
 
-import com.social.Classes.Post;
+import com.social.Entity.Post;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.social.utils;
 
-import com.social.Classes.*;
+import com.social.Entity.*;
 import com.social.responses.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,8 @@ public class DbUtils {
 
     private boolean checkUser(String username) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT id from users");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT id from users where username=?");
+            ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return true;
@@ -72,14 +73,17 @@ public class DbUtils {
     }
 
     //register query
-    public BasicResponse registerUser(String username, String password) {
+    public BasicResponse registerUser(String username, String password,String link) {
         try {
+            String PicPath="/images/DefaultPic.png";
+            if(!link.isEmpty()){
+                PicPath=link;
+            }
             if (!checkUser(username)) {
-                String defaultPicPath = "/images/DefaultPic.png";
                 PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(username, password,Profile_image) values(?,?,?)");
                 ps.setString(1, username);
                 ps.setString(2, password);
-                ps.setString(3, defaultPicPath);
+                ps.setString(3, PicPath);
                 int rs = ps.executeUpdate();
                 if (rs == 0) {
                     return new BasicResponse(false, ERROR_USERNAME_TAKEN);
@@ -96,9 +100,9 @@ public class DbUtils {
 
 
     //login query
-    public BasicResponse login(String username, String password) {
+    public UserResponse login(String username, String password) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT Id,username, password FROM users WHERE username=? AND password=?");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT Id,username,Profile_image FROM users WHERE username=? AND password=?");
             ps.setString(1, username);
             ps.setString(2, password);
             try (ResultSet rs = ps.executeQuery()) {
@@ -106,16 +110,16 @@ public class DbUtils {
                     int userId = rs.getInt("id");
 
                     String token = jwtUtils.generateToken(username, userId);
-                    return new UserResponse(true, null, new User(rs.getInt("Id"),
+                    return new UserResponse(true, null, new User(userId,
                             rs.getString("Username"), rs.getString("Profile_image")
                     ), token);
                 }
-                return new BasicResponse(false, ERROR_WRONG_INFO);
+                return new UserResponse(false, ERROR_WRONG_INFO);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return new BasicResponse(false, ERROR_WRONG_INFO);
+        return new UserResponse(false, ERROR_WRONG_INFO);
     }
 
 

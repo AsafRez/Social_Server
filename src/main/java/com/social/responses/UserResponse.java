@@ -1,6 +1,6 @@
 package com.social.responses;
 
-import com.social.Classes.User;
+import com.social.Entity.User;
 
 public class UserResponse extends BasicResponse{
     private User user;
@@ -12,8 +12,20 @@ public class UserResponse extends BasicResponse{
         this.token = token;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
     public UserResponse(boolean success, Integer errorCode, User user) {
         super(success, errorCode);
         this.user = user;
+    }
+    public UserResponse(boolean success, Integer errorCode) {
+        super(success, errorCode);
+
     }
 }

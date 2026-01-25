@@ -1,4 +1,4 @@
-package com.social.Classes;
+package com.social.Entity;
 
 public class Like {
 

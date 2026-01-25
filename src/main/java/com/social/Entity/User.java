@@ -1,4 +1,4 @@
-package com.social.Classes;
+package com.social.Entity;
 
 import java.util.List;
 
@@ -14,7 +14,6 @@ public class User {
     private List<User> following; //User following list
 
     public User(String userName, String password, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-//        this.id = id;
         this.userName = userName;
         this.password = password;
         this.profile_picture = profile_picture;
@@ -22,8 +21,8 @@ public class User {
         this.followers = followers;
         this.following = following;
     }
+
     public User(String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-//        this.id = id;
         this.userName = userName;
         this.profile_picture = profile_picture;
         this.posts = posts;
@@ -31,13 +30,14 @@ public class User {
         this.following = following;
     }
 
-    public User(int id,String userName,String profile_picture) {
-        this.id=id;
+    public User(int id, String userName, String profile_picture) {
+        this.id = id;
         this.profile_picture = profile_picture;
         this.userName = userName;
     }
+
     public User(int id, String userName) {
-        this.id=id;
+        this.id = id;
         this.userName = userName;
     }
 
@@ -85,9 +85,16 @@ public class User {
         return following;
     }
 
-    public void setFollowing(List<User> following) {
+    public void setFollowing(List<User> following)
+    {
         this.following = following;
     }
 
-    public void setId(int id) {this.id = id;}
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return this.id;
+    }
 }

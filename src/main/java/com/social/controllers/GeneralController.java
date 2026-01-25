@@ -1,9 +1,10 @@
 package com.social.controllers;
 
 
-import com.social.Classes.*;
+import com.social.Entity.*;
 import com.social.responses.BasicResponse;
 import com.social.responses.PostResponse;
+import com.social.responses.UserResponse;
 import com.social.utils.DbUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,11 @@ public class GeneralController {
     @Autowired
     private DbUtils dbUtils;
     private Map<Integer, String>OTPmap;
+    private Map<String, Integer>TokensMap;
 
     @PostConstruct
     public void init() {
+        TokensMap=new HashMap<>();
     }
     private String generateMD5(String username, String password) {
         try {
@@ -53,9 +56,9 @@ public class GeneralController {
 
 
     @RequestMapping("/register")
-    public BasicResponse register(String username, String password) {
+    public BasicResponse register(String username, String password,String photolink) {
             String hashedPassword = generateMD5(username, password);
-            return dbUtils.registerUser(username, hashedPassword);
+            return dbUtils.registerUser(username, hashedPassword,photolink);
 
     }
     @RequestMapping("/Count-Likes")
@@ -79,10 +82,13 @@ public class GeneralController {
         return dbUtils.getPosts(userId,number);
     }
 
-    @RequestMapping(value = "/login")
-    public BasicResponse login( String username,  String password) {
+
+    @RequestMapping(value = "/Login")
+    public UserResponse login(String username, String password) {
         String hashedPassword = generateMD5(username, password);
-        return dbUtils.login(username, hashedPassword);
+        UserResponse result= dbUtils.login(username, hashedPassword);
+        TokensMap.put(result.getToken(),result.getUser().getId());
+        return result;
     }
     @RequestMapping(value = "/Publish-Post")
     public BasicResponse post(int userid,  String content) {
