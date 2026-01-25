@@ -88,7 +88,8 @@ public class DbUtils {
                 if (rs == 0) {
                     return new BasicResponse(false, ERROR_USERNAME_TAKEN);
                 }
-
+            }else{
+                return new BasicResponse(false, ERROR_USERNAME_TAKEN);
             }
         } catch (SQLException e) {
             e.printStackTrace();
