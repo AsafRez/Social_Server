@@ -7,7 +7,7 @@ public class User {
     private int id;
     private String userName;
     private String password;
-    private String profile_picture;
+    private String Profile_image;
 
     private List<Post> posts; //User uploaded posts
     private List<User> followers; //User followers list
@@ -15,7 +15,7 @@ public class User {
 
     public User(int id, String userName, String profile_picture) {
         this.id = id;
-        this.profile_picture = profile_picture;
+        this.Profile_image = profile_picture;
         this.userName = userName;
     }
 
@@ -43,12 +43,12 @@ public class User {
         this.password = password;
     }
 
-    public String getProfile_picture() {
-        return profile_picture;
+    public String getProfile_image() {
+        return Profile_image;
     }
 
-    public void setProfile_picture(String profile_picture) {
-        this.profile_picture = profile_picture;
+    public void setProfile_image(String profile_image) {
+        this.Profile_image = profile_image;
     }
 
     public List<Post> getPosts() {

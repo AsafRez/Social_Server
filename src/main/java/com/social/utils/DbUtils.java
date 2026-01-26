@@ -56,7 +56,7 @@ public class DbUtils {
     //register query
     public BasicResponse registerUser(String username, String password,String link) {
         try {
-            String PicPath="/images/DefaultPic.png";
+            String PicPath="/images/"+username+".png";
             if(!link.isEmpty()){
                 PicPath=link;
             }
@@ -130,7 +130,7 @@ public class DbUtils {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     user.setUserName(username);
-                    user.setProfile_picture(rs.getString("Profile_image"));
+                    user.setProfile_image(rs.getString("Profile_image"));
                     userValid = true;
                 }
             }
@@ -139,8 +139,9 @@ public class DbUtils {
         }
         if (userValid) {
             getLists(user);
+            return new UserResponse(true, null,user);
         }
-        return new UserResponse(true, null,user);
+        return new UserResponse(false, GENERIC_ERROR);
 
     }
 
@@ -151,7 +152,7 @@ public class DbUtils {
         String sqlQuery = "SELECT u.Id,u.Username,u.Profile_image,p.Content FROM users AS u"+
                 " LEFT JOIN posts AS p ON u.Id = p.Author "+
                 " LEFT JOIN follows f on f.Following=u.Id"+
-                " LEFT JOIN likes l on l.User_id=u.Id" +
+                " LEFT JOIN likes l on l.User=u.Id" +
                 " WHERE u.Username=?";
         try {
             PreparedStatement ps = this.connection.prepareStatement(sqlQuery);
@@ -161,7 +162,8 @@ public class DbUtils {
 
             if (rs.next()) {
                 user.setUserName(rs.getString("Username"));
-                user.setProfile_picture(rs.getString("Profile_image"));
+                System.out.println(rs.getString("Profile_image"));
+                user.setProfile_image(rs.getString("Profile_image"));
 
             }
 
@@ -236,7 +238,7 @@ public class DbUtils {
 
     public int countLikes(int postId) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("Select Count(User_id) FROM likes WHERE Post_Id=?");
+            PreparedStatement ps = this.connection.prepareStatement("Select Count(User) FROM likes WHERE Post_Id=?");
             ps.setInt(1, postId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -264,7 +266,7 @@ public class DbUtils {
 
     private boolean checkLikeStatus(int userId, int postId) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT 1 FROM likes WHERE Post_id=? AND User_id=?");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT 1 FROM likes WHERE Post_id=? AND User=?");
             ps.setInt(1, postId);
             ps.setInt(2, userId);
             return ps.executeQuery().next();
@@ -280,7 +282,7 @@ public class DbUtils {
         PreparedStatement ps;
         try {
             if (likeStatus) {
-                ps = this.connection.prepareStatement("DELETE FROM likes WHERE Post_id=? AND User_id=?");
+                ps = this.connection.prepareStatement("DELETE FROM likes WHERE Post_id=? AND User=?");
             } else {
                 ps = this.connection.prepareStatement("INSERT INTO likes VALUES (?,?)");
             }
@@ -297,9 +299,9 @@ public class DbUtils {
 
     //Toggle like function
     public BasicResponse toggleLike(String username, int postId) {
-        String checkSQL = "SELECT 1 FROM likes WHERE Post_id=? AND User_id=?"; //check if liked query
-        String insertSQL = "INSERT INTO likes (Post_id, User_id) VALUES (?, ?)"; //insert like query
-        String deleteSQL = "DELETE FROM likes WHERE Post_id=? AND User_id=?"; //remove like query
+        String checkSQL = "SELECT 1 FROM likes WHERE Post_id=? AND User=?"; //check if liked query
+        String insertSQL = "INSERT INTO likes (Post_id, User) VALUES (?, ?)"; //insert like query
+        String deleteSQL = "DELETE FROM likes WHERE Post_id=? AND User=?"; //remove like query
         try (PreparedStatement checkPS = this.connection.prepareStatement(checkSQL)) {
             checkPS.setInt(1, postId);
             checkPS.setString(2, username);
