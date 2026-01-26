@@ -26,6 +26,13 @@ public class UserResponse extends BasicResponse{
     }
     public UserResponse(boolean success, Integer errorCode) {
         super(success, errorCode);
+    }
 
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

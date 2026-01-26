@@ -21,8 +21,8 @@ public class GeneralController {
 
     @Autowired
     private DbUtils dbUtils;
-    private Map<Integer, String>OTPmap;
-    private Map<String, Integer>TokensMap;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @PostConstruct
     public void init() {
@@ -45,15 +45,6 @@ public class GeneralController {
             throw new RuntimeException("MD5 algorithm not found", e);
         }
     }
-//     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
-//     private static boolean isValidEmail(String email) {
-//         if (email == null) {
-//             return false;
-//         }
-//             Matcher matcher = EMAIL_PATTERN.matcher(email);
-//             return matcher.matches();
-//         }
-
 
     @RequestMapping("/register")
     public BasicResponse register(String username, String password,String photolink) {
@@ -63,7 +54,7 @@ public class GeneralController {
     }
     @RequestMapping("/Count-Likes")
     public int countLikes(@RequestParam int postId, @CookieValue(value = "token", required = false) String token) {
-        if (token != null && dbUtils.verifyToken(token).isSuccess()) {
+        if (token != null) {
             return dbUtils.countLikes(postId);
         }
         return -1;
@@ -82,62 +73,78 @@ public class GeneralController {
         return dbUtils.getPosts(userId,number);
     }
 
-
     @RequestMapping(value = "/Login")
     public UserResponse login(String username, String password) {
         String hashedPassword = generateMD5(username, password);
-        UserResponse result= dbUtils.login(username, hashedPassword);
-        TokensMap.put(result.getToken(),result.getUser().getId());
+        UserResponse result = dbUtils.login(username, hashedPassword);
+        String token = jwtUtils.generateToken(username);
+        result.setToken(token);
         return result;
     }
-    @RequestMapping(value = "/Publish-Post")
-    public BasicResponse post(int userid,  String content) {
-        return dbUtils.publishedPost(userid, content);
+
+    @PostMapping(value = "/Publish-Post")
+    public BasicResponse publishedPost(@CookieValue(name = "token", required = true) String token, String content) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            if (userName != null) {
+                dbUtils.publishedPost(userName, content);
+                return new BasicResponse(true, null);
+            }
+            return new BasicResponse(false, null);
+        }
+        return new BasicResponse(false, null);
     }
-    @RequestMapping(value = "/Like-Post")
-    public BasicResponse like(int userid,  int postid ) {
-        return dbUtils.toggleLike(userid, postid);
+
+
+    @PostMapping(value = "/Like-Post")
+    public BasicResponse toggleLike(@CookieValue(name = "token", required = true) String token, int postid) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            if (userName != null) {
+                dbUtils.toggleLike(userName, postid);
+                return new BasicResponse(true, null);
+            }
+            return new BasicResponse(false, null);
+        }
+        return new BasicResponse(false, null);
     }
-    @RequestMapping(value = "/Follow-User")
-    public BasicResponse follow(int followerid,  int followingid ) {
-        return dbUtils.followUser(followerid, followingid);
+
+
+    @PostMapping(value = "/Follow-User")
+    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, int followerid, int followingid) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            if (userName != null) {
+                dbUtils.followUser(followerid, followingid);
+                return new BasicResponse(true, null);
+            }
+            return new BasicResponse(false, null);
+        }
+        return new BasicResponse(false, null);
+    }
+
+
+    @PostMapping(value = "/Get-User-Profile")
+    public UserResponse exportUserDetails(@CookieValue(name = "token", required = true) String token) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            if (userName != null) {
+                User user = dbUtils.exportUserDetails(userName);
+                return new UserResponse(true, null, user);
+            }
+        }
+        return new UserResponse(false, null, null);
     }
 
     @RequestMapping(value = "/Search-User")
-    public List <User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = false) String token) {
-        if (token != null && dbUtils.verifyToken(token).isSuccess()) {
-            return  dbUtils.searchUser(username);
+    public List<User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = false) String token) {
+        if (token != null) {
+            return dbUtils.searchUser(username);
         }
         return null;
     }
 
-//    private int sendSMS(String tel, int OTPSend) {
-//        // 1. הגדרת ה-URL המלא (כבר כולל את הפרמטרים בתוכו)
-//        String serverURL = "https://backend-qcf9.onrender.com/send-sms?token=Almog464@&phoneNumber="
-//                + tel + "&message=Hello your one time password is:" + OTPSend
-//                + " please do not share it with others PLZZZZZZ";
-//        // 2. יצירת אובייקט RestTemplate
-//        RestTemplate restTemplate = new RestTemplate();
-//        try {
-//            ResponseEntity<String> response = restTemplate.postForEntity(serverURL, null, String.class);
-//
-//            // בדיקה אם הסטטוס קוד הוא 200 (OK)
-//            if (response.getStatusCode().is2xxSuccessful()) {
-//                System.out.println("SMS נשלח בהצלחה: " + response.getBody());
-//                return 1; // החזרת הצלחה
-//            } else {
-//                return 0; // נכשל
-//            }
-//        } catch (Exception e) {
-//            System.err.println("שגיאה בשליחת SMS: " + e.getMessage());
-//            return -1; // שגיאת רשת
-//        }
-//    }
-//    private int generateOTP(){
-//        Random random = new Random();
-//        int otp = random.nextInt(10000,99999);
-//        return otp;
-//    }
+}
 
 
 }

@@ -13,27 +13,13 @@ public class User {
     private List<User> followers; //User followers list
     private List<User> following; //User following list
 
-    public User(String userName, String password, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-        this.userName = userName;
-        this.password = password;
-        this.profile_picture = profile_picture;
-        this.posts = posts;
-        this.followers = followers;
-        this.following = following;
-    }
-
-    public User(String userName, String profile_picture, List<Post> posts, List<User> followers, List<User> following) {
-        this.userName = userName;
-        this.profile_picture = profile_picture;
-        this.posts = posts;
-        this.followers = followers;
-        this.following = following;
-    }
-
     public User(int id, String userName, String profile_picture) {
         this.id = id;
         this.profile_picture = profile_picture;
         this.userName = userName;
+    }
+
+    public User() {
     }
 
     public User(int id, String userName) {

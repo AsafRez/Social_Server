@@ -1,22 +1,21 @@
 package com.social.utils;
 
+
 import com.social.Entity.*;
 import com.social.responses.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 import static com.social.utils.Errors.*;
 
 @Component
 public class DbUtils {
     private Connection connection;
-    @Autowired
-    private JwtUtils jwtUtils;
+
 
     @PostConstruct
     public void init() {
@@ -38,6 +37,8 @@ public class DbUtils {
         }
     }
 
+
+
     private boolean checkUser(String username) {
         try {
             PreparedStatement ps = this.connection.prepareStatement("SELECT id from users where username=?");
@@ -50,26 +51,6 @@ public class DbUtils {
             e.printStackTrace();
         }
         return false;
-    }
-
-    //Verify Token
-    public BasicResponse verifyToken(String token) {
-        if (token == null) return new BasicResponse(false, GENERIC_ERROR);
-
-        try (PreparedStatement ps = this.connection.prepareStatement(
-                "SELECT Id, Username FROM users WHERE token = ?")) {
-
-            ps.setString(1, token);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                User user = new User(rs.getInt("Id"), rs.getString("Username"));
-                return new UserResponse(true, null, user);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return new BasicResponse(false, GENERIC_ERROR);
     }
 
     //register query
@@ -94,58 +75,100 @@ public class DbUtils {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return new BasicResponse(true, null);
 
     }
 
 
+    private User getLists(User user) {
+        List<User> followers=new ArrayList<>();
+        List<User> following=new ArrayList<>();
+        PreparedStatement ps = null;
+        int count = 0;
+        while (count != 2) {
+            String getFollowers;
+            if (count == 0) {
+                getFollowers = "SELECT U.Id,U.Username,U.Profile_image FROM users U JOIN follows F ON F.follower=U.Username WHERE F.following=?";
+            } else {
+                getFollowers = "SELECT U.Id,U.Username,U.Profile_image FROM users U JOIN follows F ON F.following=U.Username WHERE F.follower=?";
+            }
+            try {
+                ps = this.connection.prepareStatement(getFollowers);
+                ps.setString(1, user.getUserName());
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        if (count == 0) {
+                            followers.add(
+                                    new User(rs.getInt(1), rs.getString(2), rs.getString(3))
+                            );
+                        } else {
+                            following.add(
+                                    new User(rs.getInt(1), rs.getString(2), rs.getString(3))
+                            );
+                        }
+                    }
+                }
+                count++;
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        user.setFollowers(followers);
+        user.setFollowing(following);
+        return user;
+    }
     //login query
     public UserResponse login(String username, String password) {
+        boolean userValid = false;
+        User user = new User();
+        PreparedStatement ps;
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT Id,username,Profile_image FROM users WHERE username=? AND password=?");
+             ps = this.connection.prepareStatement("SELECT username,Profile_image FROM users WHERE username=? AND password=?");
             ps.setString(1, username);
             ps.setString(2, password);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    int userId = rs.getInt("id");
-
-                    String token = jwtUtils.generateToken(username, userId);
-                    return new UserResponse(true, null, new User(userId,
-                            rs.getString("Username"), rs.getString("Profile_image")
-                    ), token);
+                    user.setUserName(username);
+                    user.setProfile_picture(rs.getString("Profile_image"));
+                    userValid = true;
                 }
-                return new UserResponse(false, ERROR_WRONG_INFO);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return new UserResponse(false, ERROR_WRONG_INFO);
+        if (userValid) {
+            getLists(user);
+        }
+        return new UserResponse(true, null,user);
+
     }
 
 
+
     public User exportUserDetails(String username) {
-        User user = null;
-        user.setUserName(username);
+        User user = new User(0,username);
+        String sqlQuery = "SELECT u.Id,u.Username,u.Profile_image,p.Content FROM users AS u"+
+                " LEFT JOIN posts AS p ON u.Id = p.Author "+
+                " LEFT JOIN follows f on f.Following=u.Id"+
+                " LEFT JOIN likes l on l.User_id=u.Id" +
+                " WHERE u.Username=?";
         try {
-            PreparedStatement ps = this.connection.prepareStatement(
-                    "SELECT u.Id,u.Username,u.Profile_image,p.Content FROM users AS u" +
-                            "LEFT JOIN posts AS p ON u.Id = p.Author " +
-                            " LEFT JOIN follows f on f.Following=u.Id+" +
-                            " LEFT JOIN likes l on l.User_id=u.Id " +
-                            " WHERE u.Username=?"
-            );
+            PreparedStatement ps = this.connection.prepareStatement(sqlQuery);
 
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
-//                    user.setId(rs.getInt("id"));
-            if (user != null) {
+
+            if (rs.next()) {
+                user.setUserName(rs.getString("Username"));
+                user.setProfile_picture(rs.getString("Profile_image"));
 
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        getLists(user);
         return user;
     }
 
@@ -273,13 +296,13 @@ public class DbUtils {
     }
 
     //Toggle like function
-    public BasicResponse toggleLike(int userId, int postId) {
+    public BasicResponse toggleLike(String username, int postId) {
         String checkSQL = "SELECT 1 FROM likes WHERE Post_id=? AND User_id=?"; //check if liked query
         String insertSQL = "INSERT INTO likes (Post_id, User_id) VALUES (?, ?)"; //insert like query
         String deleteSQL = "DELETE FROM likes WHERE Post_id=? AND User_id=?"; //remove like query
         try (PreparedStatement checkPS = this.connection.prepareStatement(checkSQL)) {
             checkPS.setInt(1, postId);
-            checkPS.setInt(2, userId);
+            checkPS.setString(2, username);
 
             boolean alreadyLiked; // holds liked or not
             try (ResultSet rs = checkPS.executeQuery()) {//runs check if liked query to set alreadyLiked
@@ -290,7 +313,7 @@ public class DbUtils {
             if (alreadyLiked) {
                 try (PreparedStatement deletePS = this.connection.prepareStatement(deleteSQL)) {
                     deletePS.setInt(1, postId);
-                    deletePS.setInt(2, userId);
+                    deletePS.setString(2, username);
 
                     int affected = deletePS.executeUpdate();
                     if (affected == 1) {
@@ -302,7 +325,7 @@ public class DbUtils {
             } else {
                 try (PreparedStatement insertPS = this.connection.prepareStatement(insertSQL)) {
                     insertPS.setInt(1, postId);
-                    insertPS.setInt(2, userId);
+                    insertPS.setString(2, username);
 
                     int affected = insertPS.executeUpdate();
                     if (affected == 1) {
@@ -318,7 +341,7 @@ public class DbUtils {
     }
 
 
-    public BasicResponse publishedPost(int userid, String postContent) {
+    public BasicResponse publishedPost(String username, String postContent) {
         try {
             if (!postContent.isEmpty()) {
                 if (postContent.length() <= 500) {
@@ -326,7 +349,7 @@ public class DbUtils {
                             "INSERT INTO posts " +
                                     "(Content,Author,Posted_Date) VALUES (?,?,?)");
                     ps.setString(1, postContent);
-                    ps.setInt(2, userid);
+                    ps.setString(2, username);
                     ps.setTimestamp(3,
                             new java.sql.Timestamp(System.currentTimeMillis()));
                     int results = ps.executeUpdate();

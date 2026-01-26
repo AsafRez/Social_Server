@@ -21,18 +21,18 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(secretString.getBytes());
     }
 
-    public int extractUserId(String token) {
+    public String extractUserId(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(getSigningKey())
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.get("User_id", Integer.class);
+        return claims.get("username", String.class);
     }
 
-    public String generateToken(String username, int userId) {
+    public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
-                .claim("userId", userId)
+                .claim("username", username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // משתמש במפתח מהקובץ
