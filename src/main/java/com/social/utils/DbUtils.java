@@ -127,6 +127,7 @@ public class DbUtils {
              ps = this.connection.prepareStatement("SELECT username,Profile_image FROM users WHERE username=? AND password=?");
             ps.setString(1, username);
             ps.setString(2, password);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     user.setUserName(username);
@@ -176,23 +177,27 @@ public class DbUtils {
 
 
     public List<User> searchUser(String username) {
-        List <User> users = new ArrayList<>();
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(
-                    "SELECT Id,Username,Profile_image FROM users where username LIKE ?");
-            ps.setString(1, "%"+username+"%");
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    User user = new User(rs.getInt("Id"),
-                            rs.getString("Username"),
-                            rs.getString("Profile_image"));
-                    users.add(user);
+        if (username.length() >= 2) {
+            List<User> users = new ArrayList<>();
+
+            try {
+                PreparedStatement ps = this.connection.prepareStatement(
+                        "SELECT Id,Username,Profile_image FROM users where username LIKE ?");
+                ps.setString(1, "%" + username + "%");
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        User user = new User(rs.getInt("Id"),
+                                rs.getString("Username"),
+                                rs.getString("Profile_image"));
+                        users.add(user);
+                    }
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return users;
         }
-        return users;
+        return null;
     }
 
     private boolean checkIfFollow(String follower, String following) {
@@ -210,8 +215,8 @@ public class DbUtils {
         return false;
     }
 
-    public BasicResponse followUser(int followerId, int followingId) {
-        if (followerId != followingId) {
+    public BasicResponse toggleFollow(String  follower, String following) {
+        if (!Objects.equals(follower, following)) {
             try {
                 PreparedStatement ps;
                 int rs;
@@ -366,20 +371,20 @@ public class DbUtils {
         return new BasicResponse(false, ERROR_WRONG_INFO);
     }
 
-    public PostResponse getPosts(int userId, int count) {
+    public PostResponse getPosts(String username, int numberToFetch) {
         PreparedStatement ps;
         List<Post> posts = new ArrayList<Post>();
         try {
-            if (count != 0) {
+            if (numberToFetch != 0) {
                 ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
-                        "WHERE F.follower=? ORDER BY P.Posted_Date DESC LIMIT ? ");
-                ps.setInt(2, count);
+                        "WHERE F.follower=? ORDER BY P.Posted_Date DESC LIMIT  ? ");
+                ps.setInt(2, numberToFetch);
             } else {
                 ps = this.connection.prepareStatement("SELECT P.Id,P.Content,P.Author,P.Posted_Date FROM posts P JOIN follows F ON F.following=P.Author " +
                         "WHERE F.follower=?");
 
             }
-            ps.setInt(1, userId);
+            ps.setString(1, username);
 
             ResultSet rs = ps.executeQuery();
             if (rs != null) {

@@ -1,11 +1,10 @@
 package com.social.controllers;
-
-
 import com.social.Entity.*;
 import com.social.responses.BasicResponse;
 import com.social.responses.PostResponse;
 import com.social.responses.UserResponse;
 import com.social.utils.DbUtils;
+import com.social.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +25,8 @@ public class GeneralController {
 
     @PostConstruct
     public void init() {
-        TokensMap=new HashMap<>();
     }
+
     private String generateMD5(String username, String password) {
         try {
             String source = username + password;
@@ -47,11 +46,12 @@ public class GeneralController {
     }
 
     @RequestMapping("/register")
-    public BasicResponse register(String username, String password,String photolink) {
-            String hashedPassword = generateMD5(username, password);
-            return dbUtils.registerUser(username, hashedPassword,photolink);
+    public BasicResponse register(String username, String password, String photolink) {
+        String hashedPassword = generateMD5(username, password);
+        return dbUtils.registerUser(username, hashedPassword, photolink);
 
     }
+
     @RequestMapping("/Count-Likes")
     public int countLikes(@RequestParam int postId, @CookieValue(value = "token", required = false) String token) {
         if (token != null) {
@@ -59,18 +59,28 @@ public class GeneralController {
         }
         return -1;
     }
+
     @RequestMapping("/Count-Followers")
     public int countFollowrs(@RequestParam int userId, @CookieValue(value = "token", required = false) String token) {
-        if (token != null && dbUtils.verifyToken(token).isSuccess()) {
-            return  dbUtils.countFollowers(userId);
+        if (token != null) {
+            return dbUtils.countFollowers(userId);
         }
         return -1;
     }
 
 
     @RequestMapping("/Get-Following-Posts")
-    public PostResponse getPost(int userId,int number ){
-        return dbUtils.getPosts(userId,number);
+    public PostResponse getPost(@RequestParam int numberToFetch, @CookieValue(value = "token", required = false) String token) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            PostResponse postsanswer = null;
+            if (userName != null) {
+                postsanswer = dbUtils.getPosts(userName, numberToFetch);
+                return postsanswer;
+            }
+
+        }
+        return new PostResponse(false, null, null);
     }
 
     @RequestMapping(value = "/Login")
@@ -110,12 +120,12 @@ public class GeneralController {
     }
 
 
-    @PostMapping(value = "/Follow-User")
-    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, int followerid, int followingid) {
+    @PostMapping(value = "/Toggle-Follow")
+    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, String follower, String  following) {
         if (token != null) {
             String userName = jwtUtils.extractUserId(token);
             if (userName != null) {
-                dbUtils.followUser(followerid, followingid);
+                dbUtils.toggleFollow(follower, following);
                 return new BasicResponse(true, null);
             }
             return new BasicResponse(false, null);
@@ -136,6 +146,18 @@ public class GeneralController {
         return new UserResponse(false, null, null);
     }
 
+    @PostMapping(value = "/Get-user-post")
+    public PostResponse getPosts(@RequestBody int numberToFech , @CookieValue(name = "token", required = true) String token) {
+        if (token != null) {
+            String userName = jwtUtils.extractUserId(token);
+            if (userName != null) {
+                return dbUtils.getPosts(userName, numberToFech);
+            }
+        }
+        return new PostResponse(false, null, null);
+    }
+
+
     @RequestMapping(value = "/Search-User")
     public List<User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = true) String token) {
         if (token != null) {
@@ -146,5 +168,3 @@ public class GeneralController {
 
 }
 
-
-}
