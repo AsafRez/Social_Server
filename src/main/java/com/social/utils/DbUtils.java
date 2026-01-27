@@ -195,11 +195,11 @@ public class DbUtils {
         return users;
     }
 
-    private boolean checkIfFollow(int followerId, int followingId) {
+    private boolean checkIfFollow(String follower, String following) {
         try {
             PreparedStatement ps = this.connection.prepareStatement("SELECT Follower FROM follows WHERE Follower=? AND Following=?");
-            ps.setInt(1, followerId);
-            ps.setInt(2, followingId);
+            ps.setString(1, follower);
+            ps.setString(2, following);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return true;
@@ -215,13 +215,13 @@ public class DbUtils {
             try {
                 PreparedStatement ps;
                 int rs;
-                if (checkIfFollow(followerId, followingId)) {
+                if (checkIfFollow(follower, following)) {
                     ps = this.connection.prepareStatement("DELETE FROM follows WHERE Follower=? AND Following=?");
                 } else {
                     ps = this.connection.prepareStatement("INSERT INTO follows (Follower,Following) VALUES (?,?)");
                 }
-                ps.setInt(1, followerId);
-                ps.setInt(2, followingId);
+                ps.setString(1, follower);
+                ps.setString(2, following);
                 rs = ps.executeUpdate();
                 if (rs == 1) {
                     return new BasicResponse(true, null);
@@ -233,7 +233,6 @@ public class DbUtils {
             }
         }
         return new BasicResponse(false, ERROR_WRONG_INFO);
-
     }
 
     public int countLikes(int postId) {

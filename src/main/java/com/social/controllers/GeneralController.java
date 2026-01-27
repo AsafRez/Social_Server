@@ -137,7 +137,7 @@ public class GeneralController {
     }
 
     @RequestMapping(value = "/Search-User")
-    public List<User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = false) String token) {
+    public List<User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = true) String token) {
         if (token != null) {
             return dbUtils.searchUser(username);
         }
