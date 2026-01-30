@@ -25,12 +25,15 @@ public class User {
         this.userName = userName;
     }
 
+
     public User() {
     }
 
     public User(int id, String userName) {
         this.id = id;
         this.userName = userName;
+        this.Profile_image = "/images/default.png";
+
     }
 
     public String getUserName() {
