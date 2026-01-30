@@ -4,7 +4,7 @@ import javax.persistence.*; // מייבא את כלי ה-JPA
 import java.util.List;
 
 @Entity // אומר ל-Hibernate לייצר טבלה עבור המשתמשים
-@Table(name = "USERS") // מגדיר את שם הטבלה ב-MySQL
+@Table(name = "users") // מגדיר את שם הטבלה ב-MySQL
 public class User {
 
     @Id // מגדיר את ה-id כמפתח ראשי

@@ -3,7 +3,7 @@ package com.social.Entity;
 import javax.persistence.*; // מייבא את הכלים של JPA
 
 @Entity // מגדיר ל-Hibernate לייצר טבלה עבור המחלקה הזו
-@Table(name = "LIKES") // מגדיר את שם הטבלה בדיוק כפי שביקשת
+@Table(name = "likes") // מגדיר את שם הטבלה בדיוק כפי שביקשת
 public class Like {
 
     @Id // מגדיר את ה-id כמפתח ראשי
