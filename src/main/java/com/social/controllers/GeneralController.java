@@ -155,7 +155,8 @@ public class GeneralController {
     }
 
     @RequestMapping(value = "/Login")
-    public UserResponse login(String username, String password) {
+    public UserResponse login(@RequestParam("username") String username, // הוספת האנוטציה כאן
+                              @RequestParam("password") String password) {
         String hashedPassword = generateMD5(username, password);
         UserResponse result = dbUtils.login(username, hashedPassword);
         String token = jwtUtils.generateToken(username);
