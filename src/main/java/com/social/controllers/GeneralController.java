@@ -27,6 +27,7 @@ import java.util.*;
 
 
 @RestController
+@CrossOrigin(origins = "*", allowCredentials = "true")
 public class GeneralController {
 
     @Autowired
