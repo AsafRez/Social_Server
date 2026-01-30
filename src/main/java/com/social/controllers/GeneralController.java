@@ -27,7 +27,7 @@ import java.util.*;
 
 
 @RestController
-@CrossOrigin(originPatterns = "*", allowCredentials = "true")
+@CrossOrigin(origins = "https://socialnetworkapp-4gun.onrender.com", allowCredentials = "true")
 public class GeneralController {
 
     @Autowired
