@@ -79,6 +79,29 @@ public class DbUtils {
 
     }
 
+    public BasicResponse updateProfileImage(String username) {
+        try {
+            String PicPath="/images/"+username+".png";
+            String sql = "UPDATE users SET Profile_image = ? WHERE Username = ?";
+            if (checkUser(username)) {
+                PreparedStatement ps = this.connection.prepareStatement(sql);
+                ps.setString(1, PicPath);
+                ps.setString(2, username);
+                int rs = ps.executeUpdate();
+                if (rs == 0) {
+                    return new BasicResponse(false, 2000);
+                }
+            }else{
+                return new BasicResponse(false, 2000);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new BasicResponse(true, null);
+
+    }
+
+
 
     private User getLists(User user) {
         List<User> followers=new ArrayList<>();

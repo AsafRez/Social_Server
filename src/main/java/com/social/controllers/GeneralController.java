@@ -6,10 +6,20 @@ import com.social.responses.UserResponse;
 import com.social.utils.DbUtils;
 import com.social.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.w3c.dom.ls.LSOutput;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -26,7 +36,15 @@ public class GeneralController {
     @PostConstruct
     public void init() {
     }
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+        @Override
+        public void addResourceHandlers(ResourceHandlerRegistry registry) {
+            registry.addResourceHandler("/images/**")
+                    .addResourceLocations("file:./uploads/images/");
+        }
 
+    }
     private String generateMD5(String username, String password) {
         try {
             String source = username + password;
@@ -45,11 +63,62 @@ public class GeneralController {
         }
     }
 
-    @RequestMapping("/register")
-    public BasicResponse register(String username, String password, String photolink) {
-        String hashedPassword = generateMD5(username, password);
-        return dbUtils.registerUser(username, hashedPassword, photolink);
+    private String saveFile(MultipartFile file, String username) {
+        try {
+            String folder = "uploads/images/";
+            String fileName = username + ".png";
+            Path targetPath = Paths.get(folder + fileName);
+            Path defaultPath = Paths.get(folder + "default.png");
 
+            // יצירת התיקייה אם היא לא קיימת
+            Files.createDirectories(targetPath.getParent());
+
+            if (file == null || file.isEmpty()) {
+                if (!Files.exists(targetPath)) {
+                    Files.copy(defaultPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } else {
+                Files.write(targetPath, file.getBytes());
+            }
+            return "/images/" + fileName;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "/images/default.png";
+        }
+    }
+
+//    @RequestMapping("/register")
+//    public BasicResponse register(String username, String password, String photolink) {
+//        String hashedPassword = generateMD5(username, password);
+//        return dbUtils.registerUser(username, hashedPassword, photolink);
+//
+//    }
+    @PostMapping("/register") // שינוי ל-Post
+    public BasicResponse register(
+            @RequestParam("username") String username,
+            @RequestParam("password") String password,
+            @RequestParam(value = "photo", required = false) MultipartFile photo // קבלת הקובץ עצמו
+    ) {
+        String hashedPassword = generateMD5(username, password);
+        String savedPath = saveFile(photo, username);
+        return dbUtils.registerUser(username, hashedPassword, savedPath);
+    }
+
+    @PostMapping("/update-photo")
+    public BasicResponse updatePhoto(
+            @RequestParam("username") String username,
+            @RequestParam("photo") MultipartFile photo
+    ) {
+        if (photo == null || photo.isEmpty()) {
+            return new BasicResponse(false, 2000);
+        }
+        // שמירה ודריסה של הקובץ הקיים (username.png)
+        String savedPath = saveFile(photo, username);
+        dbUtils.updateProfileImage(username);
+
+        // מחזירים הצלחה. מכיוון ששם הקובץ ב-DB כבר נכון (/images/username.png),
+        // מספיק שהקובץ הפיזי הוחלף בדיסק.
+        return new BasicResponse(true, null);
     }
 
     @RequestMapping("/Count-Likes")
@@ -133,7 +202,6 @@ public class GeneralController {
         return new BasicResponse(false, null);
     }
 
-
     @PostMapping(value = "/Get-User-Profile")
     public UserResponse exportUserDetails(@CookieValue(name = "token", required = true) String token) {
         if (token != null) {
@@ -145,6 +213,7 @@ public class GeneralController {
         }
         return new UserResponse(false, null, null);
     }
+
 
     @PostMapping(value = "/Get-user-post")
     public PostResponse getPosts(@RequestBody int numberToFech , @CookieValue(name = "token", required = true) String token) {
