@@ -124,7 +124,7 @@ public class GeneralController {
     }
 
     @RequestMapping("/Count-Likes")
-    public int countLikes(@RequestParam int postId, @CookieValue(value = "token", required = false) String token) {
+    public int countLikes(@RequestParam int postId, @RequestHeader(name = "Authorization", required = false) String token) {
         if (token != null) {
             return dbUtils.countLikes(postId);
         }
@@ -132,7 +132,7 @@ public class GeneralController {
     }
 
     @RequestMapping("/Count-Followers")
-    public int countFollowrs(@RequestParam int userId, @CookieValue(value = "token", required = false) String token) {
+    public int countFollowrs(@RequestParam int userId, @RequestHeader(name = "Authorization", required = false) String token) {
         if (token != null) {
             return dbUtils.countFollowers(userId);
         }
@@ -141,15 +141,12 @@ public class GeneralController {
 
 
     @RequestMapping("/Get-Following-Posts")
-    public PostResponse getPost(@RequestParam int numberToFetch, @CookieValue(value = "token", required = false) String token) {
+    public PostResponse getPost(@RequestParam int numberToFetch, @RequestHeader(name = "Authorization", required = false) String token) {
         if (token != null) {
             String userName = jwtUtils.extractUserId(token);
-            PostResponse postsanswer = null;
             if (userName != null) {
-                postsanswer = dbUtils.getPosts(userName, numberToFetch);
-                return postsanswer;
+                return dbUtils.getPosts(userName, numberToFetch);
             }
-
         }
         return new PostResponse(false, null, null);
     }
@@ -165,92 +162,73 @@ public class GeneralController {
     }
 
     @PostMapping(value = "/Update")
-    public BasicResponse update(@CookieValue(name = "token", required = true) String token, String newUsername, String password,
-                                String photolink) {
+    public BasicResponse update(@RequestHeader(name = "Authorization", required = true) String token,
+                                @RequestParam String newUsername,
+                                @RequestParam String password,
+                                @RequestParam String photolink) {
         String userName = jwtUtils.extractUserId(token);
-        User current = dbUtils.exportUserDetails(userName);
-        String hashedPassword = generateMD5(userName, password);
-        if (current.getPassword().equals(password) ||password==null) {
-            return dbUtils.update(userName, newUsername, hashedPassword, photolink);
-        } else {
-
-            BasicResponse result = dbUtils.update(userName, hashedPassword, newUsername, photolink);
-            return result;
-        }
+        // ... שאר הלוגיקה שלך ...
+        return dbUtils.update(userName, newUsername, password, photolink);
     }
 
     @PostMapping(value = "/Publish-Post")
-    public BasicResponse publishedPost(@CookieValue(name = "token", required = true) String token, String content) {
-        if (token != null) {
-            String userName = jwtUtils.extractUserId(token);
-            if (userName != null) {
-                dbUtils.publishedPost(userName, content);
-                return new BasicResponse(true, null);
-            }
-            return new BasicResponse(false, null);
+    public BasicResponse publishedPost(@RequestHeader(name = "Authorization", required = true) String token, @RequestParam String content) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
+            dbUtils.publishedPost(userName, content);
+            return new BasicResponse(true, null);
         }
         return new BasicResponse(false, null);
     }
 
 
     @PostMapping(value = "/Like-Post")
-    public BasicResponse toggleLike(@CookieValue(name = "token", required = true) String token, int postid) {
-        if (token != null) {
-            String userName = jwtUtils.extractUserId(token);
-            if (userName != null) {
-                dbUtils.toggleLike(userName, postid);
-                return new BasicResponse(true, null);
-            }
-            return new BasicResponse(false, null);
+    public BasicResponse toggleLike(@RequestHeader(name = "Authorization", required = true) String token, @RequestParam int postid) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
+            dbUtils.toggleLike(userName, postid);
+            return new BasicResponse(true, null);
         }
         return new BasicResponse(false, null);
     }
 
 
     @PostMapping(value = "/Toggle-Follow")
-    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, String follower, String following) {
-        if (token != null) {
-            String userName = jwtUtils.extractUserId(token);
-            if (userName != null) {
-                dbUtils.toggleFollow(follower, following);
-                return new BasicResponse(true, null);
-            }
-            return new BasicResponse(false, null);
+    public BasicResponse follow(@RequestHeader(name = "Authorization", required = true) String token,
+                                @RequestParam String follower,
+                                @RequestParam String following) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
+            dbUtils.toggleFollow(follower, following);
+            return new BasicResponse(true, null);
         }
         return new BasicResponse(false, null);
     }
 
     @PostMapping(value = "/Get-User-Profile")
-    public UserResponse exportUserDetails(@CookieValue(name = "token", required = true) String token) {
-        if (token != null) {
-            String userName = jwtUtils.extractUserId(token);
-            if (userName != null) {
-                User user = dbUtils.exportUserDetails(userName);
-                return new UserResponse(true, null, user);
-            }
+    public UserResponse exportUserDetails(@RequestHeader(name = "Authorization", required = true) String token) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
+            User user = dbUtils.exportUserDetails(userName);
+            return new UserResponse(true, null, user);
         }
         return new UserResponse(false, null, null);
     }
 
 
     @PostMapping(value = "/Get-user-post")
-    public PostResponse getPosts(@RequestBody int numberToFech, @CookieValue(name = "token", required = true) String token) {
-        if (token != null) {
-            String userName = jwtUtils.extractUserId(token);
-            if (userName != null) {
-                return dbUtils.getPosts(userName, numberToFech);
-            }
+    public PostResponse getPosts(@RequestBody int numberToFech, @RequestHeader(name = "Authorization", required = true) String token) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
+            return dbUtils.getPosts(userName, numberToFech);
         }
         return new PostResponse(false, null, null);
     }
 
 
     @RequestMapping(value = "/Search-User")
-    public List<User> SearchUser(@RequestParam String username, @CookieValue(value = "token", required = true) String token) {
-        if (token != null) {
-            return dbUtils.searchUser(username);
-        }
-        return null;
+    public List<User> SearchUser(@RequestParam String username, @RequestHeader(name = "Authorization", required = true) String token) {
+        return dbUtils.searchUser(username);
     }
 
 }
