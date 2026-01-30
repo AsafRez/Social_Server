@@ -1,4 +1,5 @@
 package com.social.controllers;
+
 import com.social.Entity.*;
 import com.social.responses.BasicResponse;
 import com.social.responses.PostResponse;
@@ -161,6 +162,21 @@ public class GeneralController {
         return result;
     }
 
+    @PostMapping(value = "/Update")
+    public BasicResponse update(@CookieValue(name = "token", required = true) String token, String newUsername, String password,
+                                String photolink) {
+        String userName = jwtUtils.extractUserId(token);
+        User current = dbUtils.exportUserDetails(userName);
+        String hashedPassword = generateMD5(userName, password);
+        if (current.getPassword().equals(password) ||password==null) {
+            return dbUtils.update(userName, newUsername, hashedPassword, photolink);
+        } else {
+
+            BasicResponse result = dbUtils.update(userName, hashedPassword, newUsername, photolink);
+            return result;
+        }
+    }
+
     @PostMapping(value = "/Publish-Post")
     public BasicResponse publishedPost(@CookieValue(name = "token", required = true) String token, String content) {
         if (token != null) {
@@ -190,7 +206,7 @@ public class GeneralController {
 
 
     @PostMapping(value = "/Toggle-Follow")
-    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, String follower, String  following) {
+    public BasicResponse follow(@CookieValue(name = "token", required = true) String token, String follower, String following) {
         if (token != null) {
             String userName = jwtUtils.extractUserId(token);
             if (userName != null) {
@@ -216,7 +232,7 @@ public class GeneralController {
 
 
     @PostMapping(value = "/Get-user-post")
-    public PostResponse getPosts(@RequestBody int numberToFech , @CookieValue(name = "token", required = true) String token) {
+    public PostResponse getPosts(@RequestBody int numberToFech, @CookieValue(name = "token", required = true) String token) {
         if (token != null) {
             String userName = jwtUtils.extractUserId(token);
             if (userName != null) {

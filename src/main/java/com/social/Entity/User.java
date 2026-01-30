@@ -13,6 +13,12 @@ public class User {
     private List<User> followers; //User followers list
     private List<User> following; //User following list
 
+    public User(int id, String userName,String password, String profile_picture) {
+        this.id = id;
+        this.password = password;
+        this.Profile_image = profile_picture;
+        this.userName = userName;
+    }
     public User(int id, String userName, String profile_picture) {
         this.id = id;
         this.Profile_image = profile_picture;

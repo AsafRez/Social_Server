@@ -141,6 +141,27 @@ public class DbUtils {
         user.setFollowing(following);
         return user;
     }
+    public BasicResponse update(String oldUsername,String newPassword,String newUswename,String photonew){
+        try {
+
+           PreparedStatement ps = this.connection.prepareStatement("UPDATE users SET Username=?,Password=?,Profile_image=?" +
+                    " WHERE username=?");
+           ps.setString(1, newUswename);
+           ps.setString(2, newPassword);
+           ps.setString(3, photonew);
+           ps.setString(4, oldUsername);
+           int rs = ps.executeUpdate();
+           if (rs == 0) {
+               return new BasicResponse(false, ERROR_USERNAME_TAKEN);
+           }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(exportUserDetails(newUswename));
+        return new BasicResponse(true, null);
+
+
+    }
     //login query
     public UserResponse login(String username, String password) {
         boolean userValid = false;
@@ -173,7 +194,7 @@ public class DbUtils {
 
     public User exportUserDetails(String username) {
         User user = new User(0,username);
-        String sqlQuery = "SELECT u.Id,u.Username,u.Profile_image,p.Content FROM users AS u"+
+        String sqlQuery = "SELECT u.Id,u.Username,u.Password,u.Profile_image,p.Content FROM users AS u"+
                 " LEFT JOIN posts AS p ON u.Id = p.Author "+
                 " LEFT JOIN follows f on f.Following=u.Id"+
                 " LEFT JOIN likes l on l.User=u.Id" +
@@ -186,7 +207,7 @@ public class DbUtils {
 
             if (rs.next()) {
                 user.setUserName(rs.getString("Username"));
-                System.out.println(rs.getString("Profile_image"));
+                user.setPassword(rs.getString("Password"));
                 user.setProfile_image(rs.getString("Profile_image"));
 
             }
@@ -205,12 +226,12 @@ public class DbUtils {
 
             try {
                 PreparedStatement ps = this.connection.prepareStatement(
-                        "SELECT Id,Username,Profile_image FROM users where username LIKE ?");
+                        "SELECT Id,Username,Password,Profile_image FROM users where username LIKE ?");
                 ps.setString(1, "%" + username + "%");
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         User user = new User(rs.getInt("Id"),
-                                rs.getString("Username"),
+                                rs.getString("Username"),rs.getString("Password"),
                                 rs.getString("Profile_image"));
                         users.add(user);
                     }
