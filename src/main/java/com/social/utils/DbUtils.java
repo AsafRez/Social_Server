@@ -434,7 +434,7 @@ public class DbUtils {
                 while (rs.next()) {
                     posts.add(new Post(
                             rs.getInt("Id"),
-                            rs.getInt("Author"),
+                            rs.getString("Author"),
                             rs.getString("Content"),
                             rs.getDate("Posted_date")));
 

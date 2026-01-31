@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.w3c.dom.ls.LSOutput;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -132,7 +131,7 @@ public class GeneralController {
     }
 
     @RequestMapping("/Count-Followers")
-    public int countFollowrs(@RequestParam int userId, @RequestHeader(name = "Authorization", required = false) String token) {
+    public int countFollowrs(@RequestParam int userId, @RequestHeader(name = "Authorization", required = true) String token) {
         if (token != null) {
             return dbUtils.countFollowers(userId);
         }
@@ -141,7 +140,7 @@ public class GeneralController {
 
 
     @RequestMapping("/Get-Following-Posts")
-    public PostResponse getPost(@RequestParam int numberToFetch, @RequestHeader(name = "Authorization", required = false) String token) {
+    public PostResponse getPost(@RequestParam int numberToFetch, @RequestHeader(name = "Authorization", required = true) String token) {
         if (token != null) {
             String userName = jwtUtils.extractUserId(token);
             if (userName != null) {
@@ -228,7 +227,11 @@ public class GeneralController {
 
     @RequestMapping(value = "/Search-User")
     public List<User> SearchUser(@RequestParam String username, @RequestHeader(name = "Authorization", required = true) String token) {
+        String userName = jwtUtils.extractUserId(token);
+        if (userName != null) {
         return dbUtils.searchUser(username);
+        }
+        return null;
     }
 
 }

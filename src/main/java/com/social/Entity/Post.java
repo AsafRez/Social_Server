@@ -11,10 +11,10 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // מגדיר Auto Increment ב-MySQL
     private int id;
 
-    @Column(name = "author_id") // מיפוי השדה לשם עמודה ב-SQL
-    private int authorId;
+    @Column(name = "Author") // מיפוי השדה לשם עמודה ב-SQL
+    private String authorId;
 
-    @Column(columnDefinition = "TEXT") // מאפשר תוכן ארוך יותר מאשר String רגיל
+    @Column(columnDefinition = "content") // מאפשר תוכן ארוך יותר מאשר String רגיל
     private String content;
 
     @Column(name = "post_date")
@@ -24,7 +24,7 @@ public class Post {
     public Post() {
     }
 
-    public Post(int id, int authorId, String content, Date postDate) {
+    public Post(int id, String authorId, String content, Date postDate) {
         this.id = id;
         this.authorId = authorId;
         this.content = content;
@@ -34,8 +34,8 @@ public class Post {
     // Getters ו-Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public int getAuthorId() { return authorId; }
-    public void setAuthorId(int authorId) { this.authorId = authorId; }
+    public String getAuthorId() { return authorId; }
+    public void setAuthorId(String authorId) { this.authorId = authorId; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
     public Date getPostDate() { return postDate; }
