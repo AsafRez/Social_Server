@@ -20,11 +20,11 @@ public class DbUtils {
     @PostConstruct
     public void init() {
         try {
-            String host = System.getenv("DB_HOST") != null ? System.getenv("DB_HOST") : "localhost";
-            String username = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : "root";
-            String password = System.getenv("DB_PASS") != null ? System.getenv("DB_PASS") : "1234";
-            String schema = System.getenv("DB_NAME") != null ? System.getenv("DB_NAME") : "socialnetwork";
-            String portStr = System.getenv("DB_PORT") != null ? System.getenv("DB_PORT") : "3306";
+            String host = "localhost";
+            String username ="root";
+            String password ="1234";
+            String schema ="socialnetwork";
+            String portStr ="3306";
             int port = Integer.parseInt(portStr);
 
             String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
@@ -40,7 +40,7 @@ public class DbUtils {
 
     private boolean checkUser(String username) {
         try {
-            PreparedStatement ps = this.connection.prepareStatement("SELECT id from users where username=?");
+            PreparedStatement ps = this.connection.prepareStatement("SELECT Id from users where Username=?");
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -60,7 +60,7 @@ public class DbUtils {
                 PicPath=link;
             }
             if (!checkUser(username)) {
-                PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(username, password,Profile_image) values(?,?,?)");
+                PreparedStatement ps = this.connection.prepareStatement("INSERT INTO users(Username, Password,Profile_image) values(?,?,?)");
                 ps.setString(1, username);
                 ps.setString(2, password);
                 ps.setString(3, PicPath);
@@ -167,7 +167,7 @@ public class DbUtils {
         User user = new User();
         PreparedStatement ps;
         try {
-             ps = this.connection.prepareStatement("SELECT username,Profile_image FROM users WHERE username=? AND password=?");
+             ps = this.connection.prepareStatement("SELECT Username,Profile_image FROM users WHERE Username=? AND Password=?");
             ps.setString(1, username);
             ps.setString(2, password);
 
