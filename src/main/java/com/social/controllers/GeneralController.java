@@ -39,11 +39,18 @@ public class GeneralController {
     }
     @Configuration
     public class WebConfig implements WebMvcConfigurer {
-        @Override
-        public void addResourceHandlers(ResourceHandlerRegistry registry) {
-            registry.addResourceHandler("/images/**")
-                    .addResourceLocations("file:./uploads/images/");
-        }
+//        @Override
+//        public void addResourceHandlers(ResourceHandlerRegistry registry) {
+//            registry.addResourceHandler("/images/**")
+//                    .addResourceLocations("file:./uploads/images/");
+//        }
+@Override
+public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    // המיפוי: כל מה שמתחיל ב- /images/
+    registry.addResourceHandler("/images/**")
+            // יופנה לתיקייה הפיזית uploads/images/
+            .addResourceLocations("file:uploads/images/");
+}
 
     }
     private String generateMD5(String username, String password) {
@@ -65,35 +72,36 @@ public class GeneralController {
     }
 
     private String saveFile(MultipartFile file, String username) {
+        String folder = "uploads/images/";
+
+        // 1. בדיקה: האם המשתמש בכלל העלה קובץ?
+        if (file == null || file.isEmpty()) {
+            // אם לא הועלתה תמונה, פשוט נחזיר את הנתיב של תמונת ברירת המחדל
+            // בלי לשכפל קבצים פיזית בתיקייה
+            return "/images/default.png";
+        }
         try {
-            String folder = "uploads/images/";
-            String fileName = username + ".png";
-            Path targetPath = Paths.get(folder + fileName);
-            Path defaultPath = Paths.get(folder + "default.png");
-
-            // יצירת התיקייה אם היא לא קיימת
-            Files.createDirectories(targetPath.getParent());
-
-            if (file == null || file.isEmpty()) {
-                if (!Files.exists(targetPath)) {
-                    Files.copy(defaultPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                }
-            } else {
-                Files.write(targetPath, file.getBytes());
+            // 2. יצירת התיקייה אם היא לא קיימת
+            Path folderPath = Paths.get(folder);
+            if (!Files.exists(folderPath)) {
+                Files.createDirectories(folderPath);
             }
+            // 3. שמירת הקובץ החדש תחת שם המשתמש
+            String fileName = username + ".png";
+            Path targetPath = folderPath.resolve(fileName);
+
+            // כתיבת הבייטים של הקובץ לדיסק
+            Files.write(targetPath, file.getBytes());
+
             return "/images/" + fileName;
+
         } catch (IOException e) {
             e.printStackTrace();
+            // במקרה של תקלה טכנית בשמירה, נחזיר את הדיפולט כדי שלא תהיה שגיאה במערכת
             return "/images/default.png";
         }
     }
 
-//    @RequestMapping("/register")
-//    public BasicResponse register(String username, String password, String photolink) {
-//        String hashedPassword = generateMD5(username, password);
-//        return dbUtils.registerUser(username, hashedPassword, photolink);
-//
-//    }
     @PostMapping("/register") // שינוי ל-Post
     public BasicResponse register(
             @RequestParam("username") String username,
@@ -166,7 +174,6 @@ public class GeneralController {
                                 @RequestParam String password,
                                 @RequestParam String photolink) {
         String userName = jwtUtils.extractUserId(token);
-        // ... שאר הלוגיקה שלך ...
         return dbUtils.update(userName, newUsername, password, photolink);
     }
 
